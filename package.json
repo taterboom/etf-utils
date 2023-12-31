@@ -1,0 +1,26 @@
+{
+  "name": "etf-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "data": "rm -rf data && ts-node src/data.ts",
+    "etfsearch": "ts-node ./src/etf_search_tool.ts t"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@8.13.1+sha256.9e5f62ce5f2b7d4ceb3c2848f41cf0b33032c24d683c7088b53f62b1885fb246",
+  "dependencies": {
+    "iconv-lite": "^0.6.3",
+    "papaparse": "^5.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/papaparse": "^5.3.14"
+  }
+}
