@@ -64,16 +64,21 @@ function readAllData() {
 
 function readInputCodes(pathname: string): string[] {
   const filepath = path.resolve(__dirname, "../input", `${pathname}.csv`)
-  const fileBuf = fs.readFileSync(filepath)
-  console.log(fileBuf.toString())
-  const data = parse(fileBuf.toString())
+  // futu exported data is utf-16le encoded
+  const fileStr = fs.readFileSync(filepath, "utf-16le")
+  const data = parse<string[]>(fileStr)
+  const header = data.data[0]
+  const codeIndex = header.findIndex((item) => item === "代码")
   /**
    * x.csv
    * 000001
    * 000002
    */
   // @ts-ignore
-  return data.data.map((item) => item[0])
+  return data.data
+    .slice(1)
+    .map((item) => item[codeIndex])
+    .filter(Boolean)
 }
 
 async function main() {
