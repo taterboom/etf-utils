@@ -4,6 +4,20 @@ import path from "path"
 import xlsx from "xlsx"
 import ETF from "../data/etf.json"
 
+const IGNORE_INDEX_CODE = [
+  "930903", // 中证A股
+  "000001", // 上证指数
+  "932000", // 中证2000
+  "000906", // 中证800
+  "000905", // 中证500
+  "000982", // 500等权
+  "000852", // 上证1000
+  "000009", // 上证380
+  "931393", // 湖北指数
+  "931588", // 1000价值稳健
+  "931591", // 1000成长创新
+]
+
 type ETFElement = {
   日期Date: string
   "指数代码 Index Code": string
@@ -51,6 +65,7 @@ function readAllData() {
 function readInputCodes(pathname: string): string[] {
   const filepath = path.resolve(__dirname, "../input", `${pathname}.csv`)
   const fileBuf = fs.readFileSync(filepath)
+  console.log(fileBuf.toString())
   const data = parse(fileBuf.toString())
   /**
    * x.csv
@@ -101,19 +116,22 @@ async function main() {
     .filter((indexCode) => sorts[indexCode] > 1)
     .sort((a, b) => sorts[b] - sorts[a])
   const result = sorted
-    .map((indexCode) => ETF.find((item) => item.indexCode === indexCode))
-    .map((etf) => {
-      return {
-        ...pick(etf!, ["productCode", "indexCode", "indexNameCn", "aum"]),
-        total: db.find((etfElemets) =>
-          etfElemets.some((etfElement) => etfElement["指数代码 Index Code"] === etf!.indexCode)
-        )!.length,
-        score: sorts[etf!.indexCode],
-      }
+    .filter((indexCode) => !IGNORE_INDEX_CODE.includes(indexCode))
+    .map((indexCode) => ETF.filter((item) => item.indexCode === indexCode))
+    .map((etfs) => {
+      return etfs
+        .map((etf) => ({
+          ...pick(etf!, ["productCode", "indexCode", "indexNameCn", "aum"]),
+          total: db.find((etfElemets) =>
+            etfElemets.some((etfElement) => etfElement["指数代码 Index Code"] === etf!.indexCode)
+          )!.length,
+          score: sorts[etf!.indexCode],
+        }))
+        .sort((a, b) => +b.aum - +a.aum)
     })
 
   console.log("Total: ", codes.length)
-  console.table(result)
+  console.table(result.flat().slice(0, 10))
 }
 
 main()
