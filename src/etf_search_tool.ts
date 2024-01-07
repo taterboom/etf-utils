@@ -1,8 +1,8 @@
 import fs from "fs"
 import { parse } from "papaparse"
 import path from "path"
-import xlsx from "xlsx"
 import ETF from "../data/etf.json"
+import { readXlsx } from "./utils"
 
 const IGNORE_INDEX_CODE = [
   "930903", // 中证A股
@@ -42,21 +42,13 @@ function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K
   return newObj
 }
 
-function readXlsx(filePath: string) {
-  const workbook = xlsx.readFile(filePath)
-  const sheetName = workbook.SheetNames[0]
-  const sheet = workbook.Sheets[sheetName]
-  const data = xlsx.utils.sheet_to_json(sheet)
-  return data as ETFElement[]
-}
-
 function readAllData() {
   const dir = path.join(__dirname, "../data/etf")
   const files = fs.readdirSync(dir)
   const data: ETFElement[][] = []
   for (const file of files) {
     const filePath = path.join(dir, file)
-    const d = readXlsx(filePath)
+    const d = readXlsx<ETFElement>(filePath)
     data.push(d)
   }
   return data

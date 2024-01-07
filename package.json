@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "data": "rm -rf data && ts-node src/data.ts",
+    "meta": "rm -rf data && ts-node src/stock_meta.ts",
     "etfsearch": "ts-node ./src/etf_search_tool.ts t"
   },
   "keywords": [],
