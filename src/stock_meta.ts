@@ -37,7 +37,7 @@ async function getShStockData() {
 // http://www.sse.com.cn/assortment/fund/list/
 async function getShEtfData() {
   const res = await fetch(
-    "http://query.sse.com.cn/commonSoaQuery.do?jsonCallBack=jsonpCallback123098&isPagination=true&pageHelp.pageSize=10&pageHelp.pageNo=1&pageHelp.beginPage=1&pageHelp.cacheSize=1&pageHelp.endPage=1&pagecache=false&sqlId=FUND_LIST&fundType=00&subClass=01%2C02%2C03%2C04%2C06%2C08%2C09%2C31%2C32%2C33%2C34%2C35%2C36%2C37%2C38&order&_=1704533155978",
+    "http://query.sse.com.cn/commonSoaQuery.do?jsonCallBack=jsonpCallback123098&isPagination=true&pageHelp.pageSize=1000&pageHelp.pageNo=1&pageHelp.beginPage=1&pageHelp.cacheSize=1&pageHelp.endPage=1&pagecache=false&sqlId=FUND_LIST&fundType=00&subClass=01%2C02%2C03%2C04%2C06%2C08%2C09%2C31%2C32%2C33%2C34%2C35%2C36%2C37%2C38&order&_=1704533155978",
     {
       headers: {
         Referer: "http://www.sse.com.cn/",
