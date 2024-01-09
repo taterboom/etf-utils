@@ -1,7 +1,7 @@
 import fs from "fs"
 import { parse } from "papaparse"
 import path from "path"
-import ETF from "../data/etf.json"
+import { ETFProduct } from "./data"
 import { readXlsx } from "./utils"
 
 const IGNORE_INDEX_CODE = [
@@ -54,8 +54,7 @@ function readAllData() {
   return data
 }
 
-function readInputCodes(pathname: string): string[] {
-  const filepath = path.resolve(__dirname, "../input", `${pathname}.csv`)
+function readInputCodesFromFutu(filepath: string): string[] {
   // futu exported data is utf-16le encoded
   const fileStr = fs.readFileSync(filepath, "utf-16le")
   const data = parse<string[]>(fileStr)
@@ -73,7 +72,30 @@ function readInputCodes(pathname: string): string[] {
     .filter(Boolean)
 }
 
-async function main() {
+function readInputCodesAtIndex(filepath: string, index: number): string[] {
+  // futu exported data is utf-16le encoded
+  const fileStr = fs.readFileSync(filepath, "utf-16le")
+  const data = parse<string[]>(fileStr)
+  const header = data.data[0]
+  const codeIndex = index
+  // @ts-ignore
+  return data.data
+    .slice(1)
+    .map((item) => item[codeIndex])
+    .filter(Boolean)
+}
+
+function getETF(): ETFProduct[] {
+  const ETFPath = path.resolve(__dirname, "../data/etf.json")
+  if (fs.existsSync(ETFPath)) {
+    return JSON.parse(fs.readFileSync(ETFPath, "utf-8"))
+  } else {
+    throw new Error("etf.json not found, please pnpm run data first")
+  }
+}
+
+export default async function search(filepath: string, options: { app?: string; index?: number }) {
+  const ETF = getETF()
   const cacheDir = path.resolve(__dirname, "../data/cache")
   const cacheFilePath = path.resolve(cacheDir, "./etfs.json")
   let db: ETFElement[][] = []
@@ -87,7 +109,18 @@ async function main() {
     fs.writeFileSync(cacheFilePath, JSON.stringify(db, null, 2))
   }
 
-  const codes = readInputCodes(process.argv[2])
+  let codes: string[] = []
+  if (options.app) {
+    if (options.app === "futu") {
+      codes = readInputCodesFromFutu(filepath)
+    }
+  } else {
+    codes = readInputCodesAtIndex(filepath, options.index || 0)
+  }
+  if (codes.length === 0) {
+    throw new Error("No codes found")
+  }
+
   const etfIndexCodesList = codes.map((code) =>
     db
       .filter((etfElements) =>
@@ -131,4 +164,8 @@ async function main() {
   console.table(result.flat().slice(0, 10))
 }
 
-main()
+// if executed directly
+if (require.main === module) {
+  const filepath = path.resolve(__dirname, "../input/t.csv")
+  search(filepath, { app: "futu" })
+}

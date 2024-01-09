@@ -4,7 +4,7 @@
 
 import fs from "fs"
 
-type ETFProduct = {
+export type ETFProduct = {
   productCode: string // 这个是标的的股票代码
   fundName: string
   fundNameEn: string
