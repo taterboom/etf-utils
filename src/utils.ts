@@ -1,5 +1,5 @@
 import { parse } from "papaparse"
-import xlsx from "xlsx"
+import * as xlsx from "xlsx"
 
 export function readXlsx<R>(fileBufOrFilePath: string | ArrayBuffer) {
   const workbook =

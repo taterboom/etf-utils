@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "rm -rf data && ts-node src/prepare.ts",
+    "postinstall": "npm run preparedata",
+    "preparedata": "rm -rf data && ts-node src/prepare.ts",
     "etfsearch": "ts-node ./src/etf_search_tool.ts",
-    "dev": "npm run prepare && next dev",
-    "build": "next build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "keywords": [],
   "author": "",
