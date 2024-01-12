@@ -1,8 +1,11 @@
 import fs from "fs"
+import { pick } from "lodash"
 import { parse } from "papaparse"
 import path from "path"
-import { ETFProduct } from "./data"
-import { readXlsx } from "./utils"
+import ETF from "./assets/etf.json"
+import ETFS from "./assets/etfs.json"
+import { ETFElement } from "./etf_info"
+import { readInputCodesFromFutu } from "./utils"
 
 const IGNORE_INDEX_CODE = [
   "930903", // 中证A股
@@ -18,60 +21,6 @@ const IGNORE_INDEX_CODE = [
   "931591", // 1000成长创新
 ]
 
-type ETFElement = {
-  日期Date: string
-  "指数代码 Index Code": string
-  "指数名称 Index Name": string
-  "指数英文名称Index Name(Eng)": string
-  "成份券代码Constituent Code"?: string
-  "成份券名称Constituent Name"?: string
-  "沪市代码Constituent Code SHH"?: string
-  "沪市名称Constituent Name SHH"?: string
-  "深市代码Constituent Code SZH"?: string
-  "深市名称Constituent Name SZH"?: string
-  "成份券英文名称Constituent Name(Eng)": string
-  交易所Exchange: string
-  "交易所英文名称Exchange(Eng)": string
-}
-
-function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
-  const newObj = {} as Pick<T, K>
-  for (const key of keys) {
-    newObj[key] = obj[key]
-  }
-  return newObj
-}
-
-function readAllData() {
-  const dir = path.join(__dirname, "../data/etf")
-  const files = fs.readdirSync(dir)
-  const data: ETFElement[][] = []
-  for (const file of files) {
-    const filePath = path.join(dir, file)
-    const d = readXlsx<ETFElement>(filePath)
-    data.push(d)
-  }
-  return data
-}
-
-function readInputCodesFromFutu(filepath: string): string[] {
-  // futu exported data is utf-16le encoded
-  const fileStr = fs.readFileSync(filepath, "utf-16le")
-  const data = parse<string[]>(fileStr)
-  const header = data.data[0]
-  const codeIndex = header.findIndex((item) => item === "代码")
-  /**
-   * x.csv
-   * 000001
-   * 000002
-   */
-  // @ts-ignore
-  return data.data
-    .slice(1)
-    .map((item) => item[codeIndex])
-    .filter(Boolean)
-}
-
 function readInputCodesAtIndex(filepath: string, index: number): string[] {
   // futu exported data is utf-16le encoded
   const fileStr = fs.readFileSync(filepath, "utf-16le")
@@ -85,34 +34,11 @@ function readInputCodesAtIndex(filepath: string, index: number): string[] {
     .filter(Boolean)
 }
 
-function getETF(): ETFProduct[] {
-  const ETFPath = path.resolve(__dirname, "../data/etf.json")
-  if (fs.existsSync(ETFPath)) {
-    return JSON.parse(fs.readFileSync(ETFPath, "utf-8"))
-  } else {
-    throw new Error("etf.json not found, please pnpm run data first")
-  }
-}
-
-export default async function search(filepath: string, options: { app?: string; index?: number }) {
-  const ETF = getETF()
-  const cacheDir = path.resolve(__dirname, "../data/cache")
-  const cacheFilePath = path.resolve(cacheDir, "./etfs.json")
-  let db: ETFElement[][] = []
-  if (fs.existsSync(cacheFilePath)) {
-    db = JSON.parse(fs.readFileSync(cacheFilePath, "utf-8"))
-  } else {
-    db = readAllData()
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true })
-    }
-    fs.writeFileSync(cacheFilePath, JSON.stringify(db, null, 2))
-  }
-
+const readCodes = (filepath: string, options: { app?: string; index?: number }) => {
   let codes: string[] = []
   if (options.app) {
     if (options.app === "futu") {
-      codes = readInputCodesFromFutu(filepath)
+      codes = readInputCodesFromFutu(fs.readFileSync(filepath))
     }
   } else {
     codes = readInputCodesAtIndex(filepath, options.index || 0)
@@ -120,6 +46,12 @@ export default async function search(filepath: string, options: { app?: string; 
   if (codes.length === 0) {
     throw new Error("No codes found")
   }
+  console.log("Total: ", codes.length)
+  return codes
+}
+
+export default async function search(codes: string[]) {
+  const db = ETFS as ETFElement[][]
 
   const etfIndexCodesList = codes.map((code) =>
     db
@@ -159,13 +91,14 @@ export default async function search(filepath: string, options: { app?: string; 
         }))
         .sort((a, b) => +b.aum - +a.aum)
     })
+    .flat()
+    .slice(0, 10)
 
-  console.log("Total: ", codes.length)
-  console.table(result.flat().slice(0, 10))
+  return result
 }
 
 // if executed directly
 if (require.main === module) {
   const filepath = path.resolve(__dirname, "../input/t.csv")
-  search(filepath, { app: "futu" })
+  search(readCodes(filepath, { app: "futu" }))
 }

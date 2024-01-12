@@ -1,5 +1,4 @@
 import fs from "fs"
-import path from "path"
 import { readXlsx } from "./utils"
 
 type StockMeta = {
@@ -89,26 +88,17 @@ async function getSzEtfData() {
   })
 }
 
-async function getAllStockAndEtfMeta() {
+export async function prepareAllStockAndEtfMeta() {
   let allStockAndEtfData: Array<StockMeta | ETFMeta> = []
-  const cacheDir = path.resolve(__dirname, "../data/cache")
-  const cacheFilePath = path.resolve(cacheDir, "./meta.json")
-  if (fs.existsSync(cacheFilePath)) {
-    allStockAndEtfData = JSON.parse(fs.readFileSync(cacheFilePath, "utf-8"))
-  } else {
-    const [shStock, shEtf, szStock, szEtf] = await Promise.all([
-      getShStockData(),
-      getShEtfData(),
-      getSzStockData(),
-      getSzEtfData(),
-    ])
-    allStockAndEtfData = [...shStock, ...shEtf, ...szStock, ...szEtf]
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true })
-    }
-    fs.writeFileSync(cacheFilePath, JSON.stringify(allStockAndEtfData, null, 2))
+  const [shStock, shEtf, szStock, szEtf] = await Promise.all([
+    getShStockData(),
+    getShEtfData(),
+    getSzStockData(),
+    getSzEtfData(),
+  ])
+  allStockAndEtfData = [...shStock, ...shEtf, ...szStock, ...szEtf]
+  if (!fs.existsSync("src/assets")) {
+    fs.mkdirSync("src/assets", { recursive: true })
   }
-  return allStockAndEtfData
+  fs.writeFileSync("src/assets/meta.json", JSON.stringify(allStockAndEtfData, null, 2))
 }
-
-getAllStockAndEtfMeta().then(console.log)
