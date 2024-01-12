@@ -5,6 +5,7 @@
 import fs from "fs"
 import { pick } from "lodash"
 import path from "path"
+import Pb from "progress"
 import { readXlsx } from "./utils"
 
 export type ETFProduct = {
@@ -104,6 +105,8 @@ export async function prepareEtfs() {
     fs.mkdirSync("data/etf", { recursive: true })
   }
 
+  const pb = new Pb("[:bar] :current/:total", { total: result.data.length })
+
   for (const i in result.data) {
     const product = result.data[i]
     const url = `https://csi-web-dev.oss-cn-shanghai-finance-1-pub.aliyuncs.com/static/html/csindex/public/uploads/file/autofile/cons/${product.indexCode}cons.xls`
@@ -120,6 +123,7 @@ export async function prepareEtfs() {
     }
     const fileName = `data/etf/${product.indexCode}.xlsx`
     fs.writeFileSync(fileName, Buffer.from(buf))
+    pb.tick()
   }
 
   const db = readAllData()
