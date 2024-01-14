@@ -50,6 +50,15 @@ const readCodes = (filepath: string, options: { app?: string; index?: number }) 
   return codes
 }
 
+export type Result = {
+  total: number
+  score: number
+  productCode: string
+  indexCode: string
+  indexNameCn: string
+  aum: string
+}[]
+
 export default async function search(codes: string[]) {
   const db = ETFS as ETFElement[][]
 
@@ -77,7 +86,7 @@ export default async function search(codes: string[]) {
   const sorted = Object.keys(sorts)
     .filter((indexCode) => sorts[indexCode] > 1)
     .sort((a, b) => sorts[b] - sorts[a])
-  const result = sorted
+  const result: Result = sorted
     .filter((indexCode) => !IGNORE_INDEX_CODE.includes(indexCode))
     .map((indexCode) => ETF.filter((item) => item.indexCode === indexCode))
     .map((etfs) => {

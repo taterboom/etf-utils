@@ -12,9 +12,13 @@ export function readXlsx<R>(fileBufOrFilePath: string | ArrayBuffer) {
   return data as R[]
 }
 
-export function readInputCodesFromFutu(fileBuf: Buffer | ArrayBuffer): string[] {
-  const decoder = new TextDecoder("utf-16le")
+export function readInputCodesFromFutu(
+  fileBuf: Buffer | ArrayBuffer,
+  ext: "txt" | "csv" = "csv"
+): string[] {
+  const decoder = new TextDecoder(ext === "txt" ? "utf-8" : "utf-16le")
   const fileStr = decoder.decode(fileBuf)
+  console.log(fileStr)
   const data = parse<string[]>(fileStr)
   const header = data.data[0]
   const codeIndex = header.findIndex((item) => item === "代码")
