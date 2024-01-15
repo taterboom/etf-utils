@@ -8,6 +8,8 @@ import ResultTable from "./table"
 import type { Result } from "@/etf_search_tool"
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -21,33 +23,42 @@ function SubmitButton() {
 export default function Page() {
   const [state, action] = useFormState<{ result: Result | null }, any>(searchEtf, { result: null })
   const formRef = useRef<HTMLFormElement>(null)
-  const [codes, setCodes] = useState<string[] | null>(null)
+  const [codesText, setCodesText] = useState<string>("")
 
   return (
     <div className="container mt-8 space-y-4">
-      <form ref={formRef} action={action}>
-        <input
-          type="file"
-          accept=".csv,.txt"
-          onChange={async (e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            console.log(file)
-            const buf = await file.arrayBuffer()
-            const fileExt = file.name.split(".").pop()
-            const codes = readInputCodesFromFutu(buf, fileExt as "txt" | "csv")
-            setCodes(codes)
-          }}
-        />
-        <input type="text" name="codes" hidden value={codes?.join(",")} />
+      <form ref={formRef} action={action} className="space-y-4">
+        <div className="space-y-2 w-96">
+          <Label>Upload Futu App File</Label>
+          <br />
+          <Input
+            type="file"
+            accept=".csv,.txt"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              console.log(file)
+              const buf = await file.arrayBuffer()
+              const fileExt = file.name.split(".").pop()
+              const codes = readInputCodesFromFutu(buf, fileExt as "txt" | "csv")
+              setCodesText(codes.join())
+            }}
+          />
+        </div>
+        <div className="space-y-2 w-96">
+          <Label>Or Input Codes</Label>
+          <br />
+          <Input
+            type="text"
+            name="codes"
+            value={codesText}
+            onChange={(e) => {
+              setCodesText(e.target.value)
+            }}
+          />
+        </div>
         <SubmitButton />
       </form>
-      {codes ? (
-        <div>
-          <h3 className="text-lg font-semibold">Codes</h3>
-          <p>{codes.join(",")}</p>
-        </div>
-      ) : null}
       {state.result ? (
         <div>
           <h3 className="text-lg font-semibold">Results</h3>
